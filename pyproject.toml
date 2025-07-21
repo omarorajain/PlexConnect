@@ -2,7 +2,7 @@
 name = "plexconnect"
 version = "0.1.0"
 description = "Apple TV DNS proxy for Plex"
-requires-python = "~=3.10.0"
+requires-python = "~=3.9.0"
 dependencies = [
     "dnslib~=0.9.16",
     "pillow~=8.3.2"
