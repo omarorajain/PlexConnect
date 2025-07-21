@@ -15,7 +15,6 @@ Thanks to reaperhulk for showing this solution!
 
 import sys
 import string
-import cgi
 import time
 from os import sep, path
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -55,11 +54,11 @@ def JSConverter(file, options):
     f.close()
 
     # PlexConnect {{URL()}}->baseURL
-    for path in set(re.findall(r'\{\{URL\((.*?)\)\}\}', JS)):
-        JS = JS.replace('{{URL(%s)}}' % path, g_param['baseURL']+path)
+    for path in set(re.findall(r"\{\{URL\((.*?)\)\}\}", JS)):
+        JS = JS.replace("{{URL(%s)}}" % path, g_param["baseURL"] + path)
 
     # localization
-    JS = Localize.replaceTEXT(JS, options['aTVLanguage']).encode('utf-8')
+    JS = Localize.replaceTEXT(JS, options["aTVLanguage"]).encode("utf-8")
 
     return JS
 
@@ -77,30 +76,33 @@ class MyHandler(BaseHTTPRequestHandler):
 
     def compress(self, data):
         buf = io.StringIO()
-        zfile = gzip.GzipFile(mode='wb',  fileobj=buf, compresslevel=9)
+        zfile = gzip.GzipFile(mode="wb", fileobj=buf, compresslevel=9)
         zfile.write(data)
         zfile.close()
         return buf.getvalue()
 
     def sendResponse(self, data, type, enableGzip):
         self.send_response(200)
-        self.send_header('Server', 'PlexConnect')
-        self.send_header('Content-type', type)
+        self.send_header("Server", "PlexConnect")
+        self.send_header("Content-type", type)
         try:
-            accept_encoding = [x.strip()
-                               for x in self.headers.get("accept-encoding", "").split(",")]
+            accept_encoding = [
+                x.strip() for x in self.headers.get("accept-encoding", "").split(",")
+            ]
         except KeyError:
             accept_encoding = []
-        if enableGzip and \
-           g_param['CSettings'].getSetting('allow_gzip_atv') == 'True' and \
-           'gzip' in accept_encoding:
-            self.send_header('Content-encoding', 'gzip')
+        if (
+            enableGzip
+            and g_param["CSettings"].getSetting("allow_gzip_atv") == "True"
+            and "gzip" in accept_encoding
+        ):
+            self.send_header("Content-encoding", "gzip")
             self.end_headers()
             self.wfile.write(self.compress(data))
         else:
             self.end_headers()
             if not isinstance(data, bytes):
-                data = bytes(data, 'utf8')
+                data = bytes(data, "utf8")
             self.wfile.write(data)
 
     def do_GET(self):
@@ -110,100 +112,110 @@ class MyHandler(BaseHTTPRequestHandler):
             dprint(__name__, 2, "http request path:\n{0}", self.path)
 
             # check for PMS address
-            PMSaddress = ''
-            pms_end = self.path.find(')')
-            if self.path.startswith('/PMS(') and pms_end > -1:
+            PMSaddress = ""
+            pms_end = self.path.find(")")
+            if self.path.startswith("/PMS(") and pms_end > -1:
                 PMSaddress = urllib.parse.unquote_plus(self.path[5:pms_end])
-                self.path = self.path[pms_end+1:]
+                self.path = self.path[pms_end + 1 :]
 
             # break up path, separate PlexConnect options
             # clean path needed for filetype decoding
             # should be '?' only, but we do some things different :-)
-            parts = re.split(r'[?&]', self.path, 1)
+            parts = re.split(r"[?&]", self.path, 1)
             if len(parts) == 1:
                 self.path = parts[0]
                 options = {}
-                query = ''
+                query = ""
             else:
                 self.path = parts[0]
 
                 # break up query string
                 options = {}
-                query = ''
-                parts = parts[1].split('&')
+                query = ""
+                parts = parts[1].split("&")
                 for part in parts:
-                    if part.startswith('PlexConnect'):
+                    if part.startswith("PlexConnect"):
                         # get options[]
-                        opt = part.split('=', 1)
+                        opt = part.split("=", 1)
                         if len(opt) == 1:
-                            options[opt[0]] = ''
+                            options[opt[0]] = ""
                         else:
                             options[opt[0]] = urllib.parse.unquote(opt[1])
                     else:
                         # recreate query string (non-PlexConnect) - has to be merged back when forwarded
-                        if query == '':
-                            query = '?' + part
+                        if query == "":
+                            query = "?" + part
                         else:
-                            query += '&' + part
+                            query += "&" + part
 
             # get aTV language setting
-            options['aTVLanguage'] = Localize.pickLanguage(
-                self.headers.get('Accept-Language', 'en'))
+            options["aTVLanguage"] = Localize.pickLanguage(
+                self.headers.get("Accept-Language", "en")
+            )
 
             query = query.replace("yyltyy", "<").replace("yygtyy", ">")
 
             # add client address - to be used in case UDID is unknown
-            if 'X-Forwarded-For' in self.headers:
-                options['aTVAddress'] = self.headers['X-Forwarded-For'].split(',', 1)[
-                    0]
+            if "X-Forwarded-For" in self.headers:
+                options["aTVAddress"] = self.headers["X-Forwarded-For"].split(",", 1)[0]
             else:
-                options['aTVAddress'] = self.client_address[0]
+                options["aTVAddress"] = self.client_address[0]
 
             # get aTV hard-/software parameters
-            options['aTVFirmwareVersion'] = self.headers.get(
-                'X-Apple-TV-Version', '5.1')
-            options['aTVScreenResolution'] = self.headers.get(
-                'X-Apple-TV-Resolution', '720')
+            options["aTVFirmwareVersion"] = self.headers.get(
+                "X-Apple-TV-Version", "5.1"
+            )
+            options["aTVScreenResolution"] = self.headers.get(
+                "X-Apple-TV-Resolution", "720"
+            )
 
             dprint(__name__, 2, "pms address:\n{0}", PMSaddress)
             dprint(__name__, 2, "cleaned path:\n{0}", self.path)
             dprint(__name__, 2, "PlexConnect options:\n{0}", options)
             dprint(__name__, 2, "additional arguments:\n{0}", query)
 
-            if 'User-Agent' in self.headers and \
-               'AppleTV' in self.headers['User-Agent']:
+            if "User-Agent" in self.headers and "AppleTV" in self.headers["User-Agent"]:
 
                 # recieve simple logging messages from the ATV
-                if 'PlexConnectATVLogLevel' in options:
-                    dprint('ATVLogger', int(
-                        options['PlexConnectATVLogLevel']), options['PlexConnectLog'])
+                if "PlexConnectATVLogLevel" in options:
+                    dprint(
+                        "ATVLogger",
+                        int(options["PlexConnectATVLogLevel"]),
+                        options["PlexConnectLog"],
+                    )
                     self.send_response(200)
-                    self.send_header('Content-type', 'text/plain')
+                    self.send_header("Content-type", "text/plain")
                     self.end_headers()
                     return
 
                 # serve "*.cer" - Serve up certificate file to atv
                 if self.path.endswith(".cer"):
-                    dprint(__name__, 1, "serving *.cer: "+self.path)
-                    if g_param['CSettings'].getSetting('certfile').startswith('.'):
+                    dprint(__name__, 1, "serving *.cer: " + self.path)
+                    if g_param["CSettings"].getSetting("certfile").startswith("."):
                         # relative to current path
-                        cfg_certfile = sys.path[0] + sep + \
-                            g_param['CSettings'].getSetting('certfile')
+                        cfg_certfile = (
+                            sys.path[0]
+                            + sep
+                            + g_param["CSettings"].getSetting("certfile")
+                        )
                     else:
                         # absolute path
-                        cfg_certfile = g_param['CSettings'].getSetting(
-                            'certfile')
+                        cfg_certfile = g_param["CSettings"].getSetting("certfile")
                     cfg_certfile = path.normpath(cfg_certfile)
 
-                    cfg_certfile = path.splitext(cfg_certfile)[0] + '.cer'
+                    cfg_certfile = path.splitext(cfg_certfile)[0] + ".cer"
                     try:
                         f = open(cfg_certfile, "rb")
                     except:
                         dprint(
-                            __name__, 0, "Failed to access certificate: {0}", cfg_certfile)
+                            __name__,
+                            0,
+                            "Failed to access certificate: {0}",
+                            cfg_certfile,
+                        )
                         return
 
-                    self.sendResponse(f.read(), 'text/xml', False)
+                    self.sendResponse(f.read(), "text/xml", False)
                     f.close()
                     return
 
@@ -212,63 +224,80 @@ class MyHandler(BaseHTTPRequestHandler):
                 # otherwise: path should be '/js', send /assets/js/*.js
                 dirname = path.dirname(self.path)
                 basename = path.basename(self.path)
-                if basename in ("application.js", "main.js", "javascript-packed.js", "bootstrap.js") or \
-                   basename.endswith(".js") and dirname == '/js':
+                if (
+                    basename
+                    in (
+                        "application.js",
+                        "main.js",
+                        "javascript-packed.js",
+                        "bootstrap.js",
+                    )
+                    or basename.endswith(".js")
+                    and dirname == "/js"
+                ):
                     if basename in ("main.js", "javascript-packed.js", "bootstrap.js"):
                         basename = "application.js"
                     dprint(__name__, 1, "serving /js/{0}", basename)
                     JS = JSConverter(basename, options)
-                    self.sendResponse(JS, 'text/javascript', True)
+                    self.sendResponse(JS, "text/javascript", True)
                     return
 
                 # proxy phobos.apple.com to support  PlexConnect main icon
-                if "a1.phobos.apple.com" in self.headers['Host']:
-                    resource = self.headers['Host']+self.path
-                    icon = g_param['CSettings'].getSetting('icon')
+                if "a1.phobos.apple.com" in self.headers["Host"]:
+                    resource = self.headers["Host"] + self.path
+                    icon = g_param["CSettings"].getSetting("icon")
                     if basename.startswith(icon):
                         # cut string from settings, keeps @720.png/@1080.png
-                        icon_res = basename[len(icon):]
-                        resource = sys.path[0] + '/assets/icons/icon'+icon_res
-                        dprint(__name__, 1, "serving " +
-                               self.headers['Host']+self.path+" with "+resource)
+                        icon_res = basename[len(icon) :]
+                        resource = sys.path[0] + "/assets/icons/icon" + icon_res
+                        dprint(
+                            __name__,
+                            1,
+                            "serving "
+                            + self.headers["Host"]
+                            + self.path
+                            + " with "
+                            + resource,
+                        )
                         r = open(resource, "rb")
                     else:
-                        r = urllib.request.urlopen('http://'+resource)
-                    self.sendResponse(r.read(), 'image/png', False)
+                        r = urllib.request.urlopen("http://" + resource)
+                    self.sendResponse(r.read(), "image/png", False)
                     r.close()
                     return
 
                 # serve "*.jpg" - thumbnails for old-style mainpage
                 if self.path.endswith(".jpg"):
-                    dprint(__name__, 1, "serving *.jpg: "+self.path)
+                    dprint(__name__, 1, "serving *.jpg: " + self.path)
                     f = open(sys.path[0] + sep + "assets" + self.path, "rb")
-                    self.sendResponse(f.read(), 'image/jpeg', False)
+                    self.sendResponse(f.read(), "image/jpeg", False)
                     f.close()
                     return
 
                 # serve "*.png" - only png's support transparent colors
                 if self.path.endswith(".png"):
-                    dprint(__name__, 1, "serving *.png: "+self.path)
+                    dprint(__name__, 1, "serving *.png: " + self.path)
                     f = open(sys.path[0] + sep + "assets" + self.path, "rb")
-                    self.sendResponse(f.read(), 'image/png', False)
+                    self.sendResponse(f.read(), "image/png", False)
                     f.close()
                     return
 
                 # serve subtitle file - transcoded to aTV subtitle json
-                if 'PlexConnect' in options and \
-                   options['PlexConnect'] == 'Subtitle':
-                    dprint(__name__, 1, "serving subtitle: "+self.path)
+                if "PlexConnect" in options and options["PlexConnect"] == "Subtitle":
+                    dprint(__name__, 1, "serving subtitle: " + self.path)
                     XML = Subtitle.getSubtitleJSON(
-                        PMSaddress, self.path + query, options)
-                    self.sendResponse(XML, 'application/json', True)
+                        PMSaddress, self.path + query, options
+                    )
+                    self.sendResponse(XML, "application/json", True)
                     return
 
                 # get everything else from XMLConverter - formerly limited to trailing "/" and &PlexConnect Cmds
                 if True:
-                    dprint(__name__, 1, "serving .xml: "+self.path)
+                    dprint(__name__, 1, "serving .xml: " + self.path)
                     XML = XMLConverter.XML_PMS2aTV(
-                        PMSaddress, self.path + query, options)
-                    self.sendResponse(XML, 'text/xml', True)
+                        PMSaddress, self.path + query, options
+                    )
+                    self.sendResponse(XML, "text/xml", True)
                     return
 
                 """
@@ -281,17 +310,16 @@ class MyHandler(BaseHTTPRequestHandler):
                 Added Up Page for docker helthcheck
                 self.send_error(403,"Not Serving Client %s" % self.client_address[0])
                 """
-                dprint(__name__, 1, "serving *.html: "+self.path)
+                dprint(__name__, 1, "serving *.html: " + self.path)
                 f = open(sys.path[0] + sep + "assets/templates/up.html")
-                self.sendResponse(f.read(), 'text/html', False)
+                self.sendResponse(f.read(), "text/html", False)
                 f.close()
 
         except IOError:
-            dprint(__name__, 0, 'File Not Found:\n{0}', traceback.format_exc())
+            dprint(__name__, 0, "File Not Found:\n{0}", traceback.format_exc())
             self.send_error(404, "File Not Found: %s" % self.path)
         except:
-            dprint(__name__, 0,
-                   'Internal Server Error:\n{0}', traceback.format_exc())
+            dprint(__name__, 0, "Internal Server Error:\n{0}", traceback.format_exc())
             self.send_error(500, "Internal Server Error: %s" % self.path)
 
 
@@ -300,39 +328,51 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 
 
 def Run(cmdPipe, param):
-    if not __name__ == '__main__':
+    if not __name__ == "__main__":
         signal.signal(signal.SIGINT, signal.SIG_IGN)
 
     dinit(__name__, param)  # init logging, WebServer process
 
-    cfg_IP_WebServer = param['IP_self']
-    cfg_Port_WebServer = param['CSettings'].getSetting('port_webserver')
+    cfg_IP_WebServer = param["IP_self"]
+    cfg_Port_WebServer = param["CSettings"].getSetting("port_webserver")
     try:
         server = ThreadedHTTPServer(
-            (cfg_IP_WebServer, int(cfg_Port_WebServer)), MyHandler)
+            (cfg_IP_WebServer, int(cfg_Port_WebServer)), MyHandler
+        )
         server.timeout = 1
     except Exception as e:
         dprint(
-            __name__, 0, "Failed to connect to HTTP on {0} port {1}: {2}", cfg_IP_WebServer, cfg_Port_WebServer, e)
+            __name__,
+            0,
+            "Failed to connect to HTTP on {0} port {1}: {2}",
+            cfg_IP_WebServer,
+            cfg_Port_WebServer,
+            e,
+        )
         sys.exit(1)
 
     socketinfo = server.socket.getsockname()
 
     dprint(__name__, 0, "***")
-    dprint(__name__, 0,
-           "WebServer: Serving HTTP on {0} port {1}.", socketinfo[0], socketinfo[1])
+    dprint(
+        __name__,
+        0,
+        "WebServer: Serving HTTP on {0} port {1}.",
+        socketinfo[0],
+        socketinfo[1],
+    )
     dprint(__name__, 0, "***")
 
     setParams(param)
     XMLConverter.setParams(param)
-    XMLConverter.setATVSettings(param['CATVSettings'])
+    XMLConverter.setATVSettings(param["CATVSettings"])
 
     try:
         while True:
             # check command
             if cmdPipe.poll():
                 cmd = cmdPipe.recv()
-                if cmd == 'shutdown':
+                if cmd == "shutdown":
                     break
 
             # do your work (with timeout)
@@ -347,58 +387,68 @@ def Run(cmdPipe, param):
 
 
 def Run_SSL(cmdPipe, param):
-    if not __name__ == '__main__':
+    if not __name__ == "__main__":
         signal.signal(signal.SIGINT, signal.SIG_IGN)
 
     dinit(__name__, param)  # init logging, WebServer process
 
-    cfg_IP_WebServer = param['IP_self']
-    cfg_Port_SSL = param['CSettings'].getSetting('port_ssl')
+    cfg_IP_WebServer = param["IP_self"]
+    cfg_Port_SSL = param["CSettings"].getSetting("port_ssl")
 
-    if param['CSettings'].getSetting('certfile').startswith('.'):
+    if param["CSettings"].getSetting("certfile").startswith("."):
         # relative to current path
-        cfg_certfile = sys.path[0] + sep + \
-            param['CSettings'].getSetting('certfile')
+        cfg_certfile = sys.path[0] + sep + param["CSettings"].getSetting("certfile")
     else:
         # absolute path
-        cfg_certfile = param['CSettings'].getSetting('certfile')
+        cfg_certfile = param["CSettings"].getSetting("certfile")
     cfg_certfile = path.normpath(cfg_certfile)
 
     try:
-        certfile = open(cfg_certfile, 'r')
+        certfile = open(cfg_certfile, "r")
     except:
         dprint(__name__, 0, "Failed to access certificate: {0}", cfg_certfile)
         sys.exit(1)
     certfile.close()
 
     try:
-        server = ThreadedHTTPServer(
-            (cfg_IP_WebServer, int(cfg_Port_SSL)), MyHandler)
+        server = ThreadedHTTPServer((cfg_IP_WebServer, int(cfg_Port_SSL)), MyHandler)
         server.socket = ssl.wrap_socket(
-            server.socket, certfile=cfg_certfile, server_side=True)
+            server.socket, certfile=cfg_certfile, server_side=True
+        )
         server.timeout = 1
     except Exception as e:
         dprint(
-            __name__, 0, "Failed to connect to HTTPS on {0} port {1}: {2}", cfg_IP_WebServer, cfg_Port_SSL, e)
+            __name__,
+            0,
+            "Failed to connect to HTTPS on {0} port {1}: {2}",
+            cfg_IP_WebServer,
+            cfg_Port_SSL,
+            e,
+        )
         sys.exit(1)
 
     socketinfo = server.socket.getsockname()
 
     dprint(__name__, 0, "***")
-    dprint(__name__, 0,
-           "WebServer: Serving HTTPS on {0} port {1}.", socketinfo[0], socketinfo[1])
+    dprint(
+        __name__,
+        0,
+        "WebServer: Serving HTTPS on {0} port {1}.",
+        socketinfo[0],
+        socketinfo[1],
+    )
     dprint(__name__, 0, "***")
 
     setParams(param)
     XMLConverter.setParams(param)
-    XMLConverter.setATVSettings(param['CATVSettings'])
+    XMLConverter.setATVSettings(param["CATVSettings"])
 
     try:
         while True:
             # check command
             if cmdPipe.poll():
                 cmd = cmdPipe.recv()
-                if cmd == 'shutdown':
+                if cmd == "shutdown":
                     break
 
             # do your work (with timeout)
@@ -417,15 +467,16 @@ if __name__ == "__main__":
 
     cfg = Settings.CSettings()
     param = {}
-    param['CSettings'] = cfg
-    param['CATVSettings'] = ATVSettings.CATVSettings()
+    param["CSettings"] = cfg
+    param["CATVSettings"] = ATVSettings.CATVSettings()
 
-    param['IP_self'] = '192.168.178.20'  # IP_self?
-    param['baseURL'] = 'http://' + param['IP_self'] + \
-        ':' + cfg.getSetting('port_webserver')
-    param['HostToIntercept'] = cfg.getSetting('hosttointercept')
+    param["IP_self"] = "192.168.178.20"  # IP_self?
+    param["baseURL"] = (
+        "http://" + param["IP_self"] + ":" + cfg.getSetting("port_webserver")
+    )
+    param["HostToIntercept"] = cfg.getSetting("hosttointercept")
 
     if len(sys.argv) == 1:
         Run(cmdPipe[1], param)
-    elif len(sys.argv) == 2 and sys.argv[1] == 'SSL':
+    elif len(sys.argv) == 2 and sys.argv[1] == "SSL":
         Run_SSL(cmdPipe[1], param)

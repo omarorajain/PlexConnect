@@ -1,0 +1,42 @@
+version = 1
+revision = 2
+requires-python = "==3.10.*"
+
+[[package]]
+name = "dnslib"
+version = "0.9.26"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a2/71/269f74ef9bc8ca453af2e1768d4f4c8e7ef5f894d058d27fd1b69c754d7f/dnslib-0.9.26.tar.gz", hash = "sha256:be56857534390b2fbd02935270019bacc5e6b411d156cb3921ac55a7fb51f1a8", size = 82901, upload-time = "2025-03-03T09:17:32.606Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/16/93/167364f10194e374119b211e475ed8763d7591ae4f7001b304282dde5825/dnslib-0.9.26-py3-none-any.whl", hash = "sha256:e68719e633d761747c7e91bd241019ef5a2b61a63f56025939e144c841a70e0d", size = 64161, upload-time = "2025-03-03T09:17:31.47Z" },
+]
+
+[[package]]
+name = "pillow"
+version = "8.3.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/90/d4/a7c9b6c5d176654aa3dbccbfd0be4fd3a263355dc24122a5f1937bdc2689/Pillow-8.3.2.tar.gz", hash = "sha256:dde3f3ed8d00c72631bc19cbfff8ad3b6215062a5eed402381ad365f82f0c18c", size = 48790556, upload-time = "2021-09-02T18:14:03.398Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/69/c5/dcb1562be0c6ca72c8912bbdbeb024f1cd3616261ee93dcee08a1c4b83ea/Pillow-8.3.2-cp310-cp310-macosx_10_10_universal2.whl", hash = "sha256:c691b26283c3a31594683217d746f1dad59a7ae1d4cfc24626d7a064a11197d4", size = 3014481, upload-time = "2021-09-02T18:11:36.698Z" },
+    { url = "https://files.pythonhosted.org/packages/a6/71/78381f358f742f521d3e789e840a0652b46b8db8affb9b6b4eda7bf87a38/Pillow-8.3.2-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:f514c2717012859ccb349c97862568fdc0479aad85b0270d6b5a6509dbc142e2", size = 2775725, upload-time = "2021-09-02T18:11:39.799Z" },
+    { url = "https://files.pythonhosted.org/packages/9e/99/a4ca5ee33f339f905d0773ae0ea6cf7427f1651bcef958a78e2bee287059/Pillow-8.3.2-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:be25cb93442c6d2f8702c599b51184bd3ccd83adebd08886b682173e09ef0c3f", size = 2959578, upload-time = "2021-09-02T18:11:43.122Z" },
+    { url = "https://files.pythonhosted.org/packages/cd/68/8f79b6144d601b5b8d2a4688618c39c497995b86d0812120877996385c36/Pillow-8.3.2-cp310-cp310-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:d675a876b295afa114ca8bf42d7f86b5fb1298e1b6bb9a24405a3f6c8338811c", size = 3134576, upload-time = "2021-09-02T18:11:45.951Z" },
+    { url = "https://files.pythonhosted.org/packages/91/24/0f5b7fbbff91e8a2e826f7e37a2c7142e535e4f5988936b0bda352718ee3/Pillow-8.3.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:59697568a0455764a094585b2551fd76bfd6b959c9f92d4bdec9d0e14616303a", size = 3047141, upload-time = "2021-09-02T18:11:50.553Z" },
+    { url = "https://files.pythonhosted.org/packages/64/80/5879dfc0792e8a230fe7a7ab142ddaf3fbc5862c6d27998fcf07924ea67f/Pillow-8.3.2-cp310-cp310-win32.whl", hash = "sha256:2d5e9dc0bf1b5d9048a94c48d0813b6c96fccfa4ccf276d9c36308840f40c228", size = 2781862, upload-time = "2021-09-02T18:11:53.214Z" },
+    { url = "https://files.pythonhosted.org/packages/8b/56/0726fe62bb57cb55693bc9433bc6e4d47ffdd30c3cb59eb891496fc0236e/Pillow-8.3.2-cp310-cp310-win_amd64.whl", hash = "sha256:11c27e74bab423eb3c9232d97553111cc0be81b74b47165f07ebfdd29d825875", size = 3224813, upload-time = "2021-09-02T18:11:56.184Z" },
+]
+
+[[package]]
+name = "plexconnect"
+version = "0.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "dnslib" },
+    { name = "pillow" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "dnslib", specifier = "~=0.9.16" },
+    { name = "pillow", specifier = "~=8.3.2" },
+]

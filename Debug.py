@@ -10,17 +10,19 @@ debug levels (examples):
 """
 
 import time
-dlevels = {"PlexConnect": 0,
-           "PlexAPI": 0,
-           "DNSServer": 1,
-           "WebServer": 1,
-           "XMLConverter": 0,
-           "Settings": 0,
-           "ATVSettings": 0,
-           "Localize": 0,
-           "ATVLogger": 0,
-           "PILBackgrounds": 0,
-           }
+
+dlevels = {
+    "PlexConnect": 0,
+    "PlexAPI": 0,
+    "DNSServer": 1,
+    "WebServer": 1,
+    "XMLConverter": 0,
+    "Settings": 0,
+    "ATVSettings": 0,
+    "Localize": 0,
+    "ATVLogger": 0,
+    "PILBackgrounds": 0,
+}
 
 
 try:
@@ -29,22 +31,21 @@ except ImportError:
     import xml.etree.ElementTree as etree
 
 
-g_logfile = ''
+g_logfile = ""
 g_loglevel = 0
 
 
 def dinit(src, param, newlog=False):
-    if 'LogFile' in param:
+    if "LogFile" in param:
         global g_logfile
-        g_logfile = param['LogFile']
+        g_logfile = param["LogFile"]
 
-    if 'LogLevel' in param:
+    if "LogLevel" in param:
         global g_loglevel
-        g_loglevel = {"Normal": 0, "High": 2,
-                      "Off": -1}.get(param['LogLevel'], 0)
+        g_loglevel = {"Normal": 0, "High": 2, "Off": -1}.get(param["LogLevel"], 0)
 
-    if not g_loglevel == -1 and not g_logfile == '' and newlog:
-        f = open(g_logfile, 'w')
+    if not g_loglevel == -1 and not g_logfile == "" and newlog:
+        f = open(g_logfile, "w")
         f.close()
 
     dprint(src, 0, "Started")
@@ -52,7 +53,7 @@ def dinit(src, param, newlog=False):
 
 def dprint(src, dlevel, *args):
     logToTerminal = not (src in dlevels) or dlevel <= dlevels[src]
-    logToFile = not g_loglevel == -1 and not g_logfile == '' and dlevel <= g_loglevel
+    logToFile = not g_loglevel == -1 and not g_logfile == "" and dlevel <= g_loglevel
 
     if logToTerminal or logToFile:
         asc_args = list(args)
@@ -63,7 +64,7 @@ def dprint(src, dlevel, *args):
 
         # print to file (if filename defined)
         if logToFile:
-            with open(g_logfile, 'a') as f:
+            with open(g_logfile, "a") as f:
                 f.write(time.strftime("%b %d,%Y %H:%M:%S "))
                 if len(asc_args) == 0:
                     f.write(f"{src}:\n")
@@ -74,7 +75,7 @@ def dprint(src, dlevel, *args):
 
         # print to terminal window
         if logToTerminal:
-            print((time.strftime("%b %d,%Y %H:%M:%S")), end=' ')
+            print((time.strftime("%b %d,%Y %H:%M:%S")), end=" ")
             if len(asc_args) == 0:
                 print(f"{src}:")
             elif len(asc_args) == 1:
@@ -107,15 +108,15 @@ def indent(elem, level=0):
 
 def prettyXML(elem):
     indent(elem)
-    return(etree.tostring(elem))
+    return etree.tostring(elem)
 
 
 if __name__ == "__main__":
-    dinit('Debug', {'LogFile': 'Debug.log'}, True)  # True -> new file
-    dinit('unknown', {'Logfile': 'Debug.log'})  # False/Dflt -> append to file
+    dinit("Debug", {"LogFile": "Debug.log"}, True)  # True -> new file
+    dinit("unknown", {"Logfile": "Debug.log"})  # False/Dflt -> append to file
 
-    dprint('unknown', 0, "debugging {0}", __name__)
-    dprint('unknown', 1, "level 1")
+    dprint("unknown", 0, "debugging {0}", __name__)
+    dprint("unknown", 1, "level 1")
 
-    dprint('PlexConnect', 0, "debugging {0}", 'PlexConnect')
-    dprint('PlexConnect', 1, "level")
+    dprint("PlexConnect", 0, "debugging {0}", "PlexConnect")
+    dprint("PlexConnect", 1, "level")

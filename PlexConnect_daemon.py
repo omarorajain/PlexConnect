@@ -34,7 +34,7 @@ def daemonize(args):
 
     # Make sure I can read my own files and shut out others
     prev = os.umask(0)
-    os.umask(prev and int('077', 8))
+    os.umask(prev and int("077", 8))
 
     # Make the child a session-leader by detaching from the terminal
     try:
@@ -48,11 +48,12 @@ def daemonize(args):
         try:
             atexit.register(delpid)
             pid = str(os.getpid())
-            with open(args.pidfile, 'w') as fh:
+            with open(args.pidfile, "w") as fh:
                 fh.write(f"{pid}")
         except IOError as e:
             raise SystemExit(
-                "Unable to write PID file: %s [%d]" % (e.strerror, e.errno))
+                "Unable to write PID file: %s [%d]" % (e.strerror, e.errno)
+            )
 
 
 def delpid():
@@ -65,12 +66,12 @@ def sighandler_shutdown(signum, frame):
     cmdShutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     signal.signal(signal.SIGINT, sighandler_shutdown)
     signal.signal(signal.SIGTERM, sighandler_shutdown)
 
-    parser = argparse.ArgumentParser(description='PlexConnect as daemon.')
-    parser.add_argument('--pidfile', dest='pidfile')
+    parser = argparse.ArgumentParser(description="PlexConnect as daemon.")
+    parser.add_argument("--pidfile", dest="pidfile")
     args = parser.parse_args()
 
     with redirect_stdout(open(os.devnull, "a")):
